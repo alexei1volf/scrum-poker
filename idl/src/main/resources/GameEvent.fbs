@@ -1,0 +1,28 @@
+namespace com.example.scrumpoker.data;
+
+table Player {
+  id: string;
+}
+
+table LoginPlayerEvent  {
+  id: string;
+  game_id: string;
+}
+
+table CreatePlayerEvent  {
+  id: string;
+}
+
+table DeletePlayerEvent  {
+  id: string;
+}
+
+union EventType {
+    DeletePlayer: DeletePlayerEvent
+}
+
+table GameEvent {
+  event: EventType;
+}
+
+root_type GameEvent;

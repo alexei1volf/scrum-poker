@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import {Observable} from 'rxjs';
 import {RoomService} from './room.service';
+import {Room} from '../data/room';
 
 @Component({
   selector: 'app-room',
@@ -9,12 +10,12 @@ import {RoomService} from './room.service';
 })
 export class RoomComponent implements OnInit {
 
-  rooms: Observable<string>;
+  rooms: Observable<Room[]>;
 
   constructor(private roomService: RoomService) { }
 
   ngOnInit(): void {
-    this.rooms = this.roomService.listAndListen();
+    this.rooms = this.roomService.getRooms();
   }
 
 }

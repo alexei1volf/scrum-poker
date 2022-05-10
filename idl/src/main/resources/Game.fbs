@@ -1,0 +1,11 @@
+namespace com.example.scrumpoker.data;
+
+table Player {
+  id: string;
+}
+
+table Game {
+  players: [Player];
+}
+
+root_type Game;

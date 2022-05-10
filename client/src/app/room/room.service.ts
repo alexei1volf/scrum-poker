@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs';
+import {BehaviorSubject, Observable} from 'rxjs';
 import {
   BufferEncoders,
   encodeCompositeMetadata,
@@ -9,18 +9,28 @@ import {
   RSocketClient
 } from 'rsocket-core';
 import RSocketWebSocketClient from 'rsocket-websocket-client';
+import {Mapper} from '../flatbuffers/Mapper';
+import {Room} from '../data/room';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RoomService {
 
-  client;
+  public rooms$: BehaviorSubject<Room[]> = new BehaviorSubject([]);
+
+  private client;
+  private rooms: Room[] = [];
 
   constructor() {
   }
 
-  public listAndListen(): Observable<string> {
+  public getRooms(): Observable<Room[]> {
+    this.listAndListen();
+    return this.rooms$;
+  }
+
+  private listAndListen(): void {
     this.client = new RSocketClient({
       setup: {
         keepAlive: 30000,
@@ -43,7 +53,27 @@ export class RoomService {
           ]),
           data: Buffer.from('username')
         }).subscribe({
-          onComplete: () => console.log('login complete'),
+          onComplete: () => {
+            rsocket.requestStream({
+              metadata: encodeCompositeMetadata([
+                [MESSAGE_RSOCKET_ROUTING, encodeRoute('room')],
+              ]),
+            }).subscribe({
+              onSubscribe: (s) => {
+                s.request(2147483642);
+              },
+              onNext: eventBuf => {
+                console.log('room event is handled');
+                this.handleRoomEvent(Mapper.extractRoom(eventBuf));
+              },
+              onError: error => {
+                console.log('rooms list and listen error:: ' + error);
+              },
+              onComplete: () => {
+                console.log('rooms list and listen is completed');
+              }
+            });
+          },
           onError: error => {
             console.log('Connection has been closed due to:: ' + error);
           }
@@ -56,8 +86,6 @@ export class RoomService {
         /* call cancel() to abort */
       }
     });
-
-    return new Observable();
   }
 
   private urlFromLocation(): string {
@@ -65,6 +93,17 @@ export class RoomService {
     const isSecure = window.location.protocol === 'https:';
     const hostname = window.location.hostname;
     return `${isSecure ? 'wss' : 'ws'}://${hostname}:${port}/rsocket`;
+  }
+
+  private handleRoomEvent({eventType, room}): void {
+    if (eventType === 'Added') {
+      this.rooms = [room, ...this.rooms];
+    } else if (eventType === 'Updated') {
+      this.rooms = [room, ...this.rooms.filter(r => r.id !== room.id)];
+    } else {
+      this.rooms = this.rooms.filter(r => r.id !== room.id);
+    }
+    this.rooms$.next(this.rooms);
   }
 
 }

@@ -6,12 +6,13 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.example.scrumpoker.server.utils.SinksSupport.RETRY_NON_SERIALIZED;
 import static com.example.scrumpoker.server.player.PlayerEvent.Type.DISCONNECTED;
 import static com.example.scrumpoker.server.room.RoomEvent.Type.*;
+import static com.example.scrumpoker.server.utils.SinksSupport.RETRY_NON_SERIALIZED;
 
 @Service
 public class RoomRepository {
@@ -25,6 +26,11 @@ public class RoomRepository {
                 remove(pe.getPlayer());
             }
         });
+
+        Player alex = new Player(UUID.randomUUID().toString(), "Alex");
+        String roomId = UUID.randomUUID().toString();
+        Room room = new Room(roomId, alex);
+        allRooms.put(roomId, room);
     }
 
     public Flux<RoomEvent> listAndListen() {

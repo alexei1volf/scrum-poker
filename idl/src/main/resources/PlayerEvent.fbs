@@ -1,0 +1,22 @@
+namespace com.example.scrumpoker.data;
+
+table Player {
+  id: string;
+  name: string;
+}
+
+table PlayerId {
+  id: string;
+}
+
+
+union EventType {
+  Connected: Player,
+  Disconnected: PlayerId
+}
+
+table PlayerEvent {
+  event: EventType;
+}
+
+root_type PlayerEvent;
